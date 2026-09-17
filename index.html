@@ -163,6 +163,7 @@ footer{margin:60px 0 44px;padding-top:20px;border-top:1px solid var(--line);
   <a href="#s6">⑩ 転記（残り）</a>
   <a href="#s7">テスト</a>
   <a href="#s8">つまずきポイント</a>
+  <a href="#s9">リストの書式設定</a>
 </div></nav>
 
 <div class="wrap">
@@ -706,7 +707,94 @@ if(contains(items('For_each')?['subject'],'打合'),'打合せ',
 </section>
 
 <section id="s9">
-  <div class="sec-head"><span class="sec-num">09</span><h2>この先の予定</h2></div>
+  <div class="sec-head"><span class="sec-num">09</span><h2>リストの見た目を整える</h2></div>
+  <p class="lede">SharePointリストは、JSONを貼り付けることで色分けやバッジ表示ができます。一覧を眺めたときに、対応が必要な行が目に入るようになります。</p>
+
+  <div class="card pad">
+
+    <h3 style="margin-top:0">その前に ― JSONなしでできること</h3>
+    <p>まずこの3つを試してください。<b>コードを書かずに見た目が変わります。</b></p>
+    <div class="scroll"><table>
+      <thead><tr><th style="width:28%">やりたいこと</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td><b>顧客ごとにまとめる</b></td>
+          <td>［現在のビューの編集］→［グループ化］→ 顧客名。見出しに「顧客名 (7)」と件数が出ます</td></tr>
+        <tr><td><b>カード表示にする</b></td>
+          <td>ビューのドロップダウン →［現在のビューの書式設定］→ レイアウトを「<b>ギャラリー</b>」に変更</td></tr>
+        <tr><td><b>技術用の列を隠す</b></td>
+          <td>［現在のビューの編集］で「予定ID」の表示チェックを外す。集計には使わない列です</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note hl"><b>ビューは複数作れます。</b>［現在のビューに名前を付けて保存］で複製してから設定すると、
+    「すべてのアイテム」「顧客別」「担当者別」「クレーム対応」のように切り替えられます。
+    クレーム対応ビューは、フィルターで <code>目的 = クレーム対応</code> を指定するだけで作れます。</div>
+
+    <h3>① 行全体を色分けする（ビューの書式設定）</h3>
+    <p>ビューのドロップダウン →［<b>現在のビューの書式設定</b>］→ レイアウトで「<b>リスト</b>」を選び、貼り付けます。</p>
+    <pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/row-formatting.schema.json",
+  "additionalRowClass": "=if([$field_4] == 'クレーム対応', 'sp-field-severity--blocked', if([$field_4] == '商談', 'sp-field-severity--good', if([$field_4] == '新規打合せ', 'sp-field-severity--low', '')))"
+}</code></pre>
+    <p><b>クレーム対応の行が赤、商談が緑、新規打合せが青</b>で塗られます。</p>
+    <div class="note alert"><b><code>[$field_4]</code> は内部名です。</b>
+    表示名の「目的」ではありません。<b>ここを間違えても何も起きません</b>（エラーも出ないので気づきにくい箇所です）。
+    内部名は、リストの［設定］→［列］から列名をクリックし、アドレス欄の末尾 <code>Field=…</code> で確認できます。</div>
+
+    <h3>② 目的列をバッジ表示にする（列の書式設定）</h3>
+    <p>「目的」列の見出し →［<b>列の設定</b>］→［<b>この列の書式設定</b>］→［<b>詳細モード</b>］に貼り付けます。</p>
+    <pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/column-formatting.schema.json",
+  "elmType": "div",
+  "txtContent": "@currentField",
+  "style": {
+    "display": "inline-block",
+    "padding": "1px 8px",
+    "border-radius": "11px",
+    "font-size": "12px",
+    "background-color": "=if(@currentField == 'クレーム対応', '#FDF3F4', if(@currentField == '商談', '#DEECF9', if(@currentField == '新規打合せ', '#DEECF9', '#F3F2F1')))",
+    "color": "=if(@currentField == 'クレーム対応', '#A4262C', if(@currentField == '商談', '#005A9E', if(@currentField == '新規打合せ', '#005A9E', '#605E5C')))"
+  }
+}</code></pre>
+    <div class="note ok"><b>こちらは <code>@currentField</code> なので内部名が不要です。</b>
+    列の書式設定は常にこの書き方で、その列自身の値を指します。<b>①より先にこちらを試すほうが安全です。</b></div>
+
+    <h3>③ クレーム対応に警告アイコンを付ける（列の書式設定・別案）</h3>
+    <p>②の代わりに使います。SharePoint標準の色クラスを使うため、<b>ダークモードやテーマ変更にも追随します。</b></p>
+    <pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/column-formatting.schema.json",
+  "elmType": "div",
+  "attributes": {
+    "class": "=if(@currentField == 'クレーム対応', 'sp-field-severity--blocked', if(@currentField == '商談', 'sp-field-severity--good', ''))"
+  },
+  "children": [
+    {
+      "elmType": "span",
+      "style": { "display": "inline-block", "padding": "0 4px" },
+      "attributes": { "iconName": "=if(@currentField == 'クレーム対応', 'Warning', '')" }
+    },
+    { "elmType": "span", "txtContent": "@currentField" }
+  ]
+}</code></pre>
+
+    <h3>貼り付けるときの注意</h3>
+    <ul>
+      <li><b>編集欄はMonacoエディター</b>（VS Codeと同じもの）です。<b>Ctrl+Space</b> で候補が出ます。</li>
+      <li>綴りを間違えるとその場で<b>赤い波線</b>が出ます。貼り付けた直後に赤線が無いか確認してください。</li>
+      <li><b>「目的」を選択肢列にしてから</b>使ってください。テキスト列のままだと表記ゆれで色が付きません。</li>
+      <li>区分の名称を変えた場合は、<b>JSON内の文字列も同じ名称に直してください。</b></li>
+    </ul>
+    <div class="note"><b>「内容」列をリッチテキストにすると、列の書式設定が使えません。</b>
+    複数行テキストは必ず「書式なしテキスト」を選んでください。</div>
+
+    <div class="src">出典：
+      <a href="https://learn.microsoft.com/en-us/sharepoint/dev/declarative-customization/view-formatting">Use view formatting to customize SharePoint — Microsoft Learn</a>
+      （“To format rows in 'List' or 'Compact List' layout, select 'List' in 'Choose layout' dropdown in the formatting pane and use the <code>rowFormatter</code> or <code>additionalRowClass</code> properties.”）
+    </div>
+  </div>
+</section>
+
+<section id="s10">
+  <div class="sec-head"><span class="sec-num">10</span><h2>この先の予定</h2></div>
   <div class="card pad">
     <h3 style="margin-top:0">次段階で追加すること</h3>
     <div class="scroll"><table>
