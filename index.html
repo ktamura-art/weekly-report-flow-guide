@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>週報自動化 設定手順書</title>
+<meta name="description" content="Outlookの予定をSharePointリストへ自動転記するPower Automateフローの設定手順">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600&family=Roboto+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ground:#f4f6f8; --surface:#fff; --surface-2:#fafbfc; --surface-3:#eef2f6;
+  --ink-1:#16202b; --ink-2:#4a5a6b; --ink-3:#7b8a99;
+  --line:#dde3ea; --line-strong:#c3ccd6;
+  --navy:#1f4e78; --navy-soft:#eaf1f8;
+  --ok:#2f7d5f; --ok-bg:#e7f3ee; --ok-line:#a9d4c1;
+  --warn:#a4661c; --warn-bg:#fbf1e2;
+  --alert:#a83a2c; --alert-bg:#fbeceb;
+  --code-bg:#f5f7f9; --code-ink:#1c3a52;
+  --shadow:0 1px 2px rgba(22,32,43,.05), 0 8px 24px -12px rgba(22,32,43,.16);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0f151b; --surface:#19212a; --surface-2:#1d262f; --surface-3:#232d38;
+    --ink-1:#e8edf3; --ink-2:#9dabba; --ink-3:#75838f;
+    --line:#2b3642; --line-strong:#3b4856;
+    --navy:#7fb3dc; --navy-soft:#1b2836;
+    --ok:#6fbf9a; --ok-bg:#14291f; --ok-line:#2c5a46;
+    --warn:#d3a35c; --warn-bg:#2a2113;
+    --alert:#e08a7d; --alert-bg:#2d1a17;
+    --code-bg:#131a21; --code-ink:#a8c8e0;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0f151b; --surface:#19212a; --surface-2:#1d262f; --surface-3:#232d38;
+  --ink-1:#e8edf3; --ink-2:#9dabba; --ink-3:#75838f;
+  --line:#2b3642; --line-strong:#3b4856;
+  --navy:#7fb3dc; --navy-soft:#1b2836;
+  --ok:#6fbf9a; --ok-bg:#14291f; --ok-line:#2c5a46;
+  --warn:#d3a35c; --warn-bg:#2a2113;
+  --alert:#e08a7d; --alert-bg:#2d1a17;
+  --code-bg:#131a21; --code-ink:#a8c8e0;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ground);color:var(--ink-1);
+  font-family:"Noto Sans JP",system-ui,-apple-system,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  font-size:15px;line-height:1.85;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+.wrap{max-width:940px;margin:0 auto;padding:0 22px}
+h1,h2,h3,h4{font-family:"Noto Serif JP",serif;font-weight:600;text-wrap:balance;margin:0}
+.mono{font-family:"Roboto Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;justify-content:space-between;padding:32px 0 24px}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--ink-3);font-weight:500}
+h1{font-size:clamp(25px,3.6vw,33px);line-height:1.35;margin-top:6px}
+.meta{font-size:12.5px;color:var(--ink-3);text-align:right;line-height:1.9}
+
+nav.sticky{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--surface) 93%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;gap:2px;overflow-x:auto;padding:0 22px;max-width:940px;margin:0 auto}
+.nav-in a{flex:none;padding:12px 11px;font-size:13px;font-weight:500;color:var(--ink-2);
+  text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
+.nav-in a:hover{color:var(--ink-1);border-bottom-color:var(--line-strong)}
+.nav-in a:focus-visible{outline:2px solid var(--navy);outline-offset:-2px;border-radius:4px}
+
+section{padding:44px 0 6px;scroll-margin-top:54px}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.sec-num{font-family:"Roboto Mono",monospace;font-size:12px;color:var(--ink-3);letter-spacing:.06em}
+h2{font-size:21px}
+h3{font-size:16px;margin:26px 0 8px}
+h4{font-size:13.5px;margin:18px 0 6px;color:var(--ink-2)}
+.lede{color:var(--ink-2);font-size:14px;max-width:70ch;margin:8px 0 20px}
+p{margin:0 0 12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.pad{padding:20px 22px}
+.scroll{overflow-x:auto}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+thead th{background:var(--surface-3);font-weight:700;font-size:12px;color:var(--ink-2);white-space:nowrap}
+tbody tr:nth-child(even) td{background:var(--surface-2)}
+.nw{white-space:nowrap}
+code{font-family:"Roboto Mono",monospace;font-size:12.5px;background:var(--code-bg);
+  color:var(--code-ink);padding:1px 5px;border-radius:4px;word-break:break-all}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:13px 15px;
+  overflow-x:auto;margin:10px 0 12px;position:relative}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.75;color:var(--code-ink);word-break:normal}
+
+/* ステップ */
+.step{display:grid;grid-template-columns:38px 1fr;gap:14px;padding:20px 0;border-top:1px solid var(--line)}
+.step:first-of-type{border-top:0}
+.step .no{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  font-family:"Roboto Mono",monospace;font-size:14px;font-weight:700;
+  background:var(--navy-soft);color:var(--navy)}
+.step.done .no{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+.step.todo .no{background:var(--warn-bg);color:var(--warn)}
+.step .bd{min-width:0}
+.step h3{margin:4px 0 8px;font-size:16.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.field{display:grid;grid-template-columns:170px 1fr;gap:7px 14px;font-size:13.5px;margin:10px 0 4px}
+.field dt{color:var(--ink-2);font-weight:500}
+.field dd{margin:0}
+@media(max-width:640px){.field{grid-template-columns:1fr}.field dt{margin-top:8px}}
+
+.note{font-size:13px;color:var(--ink-2);background:var(--surface-2);
+  border-left:3px solid var(--line-strong);padding:11px 14px;border-radius:0 7px 7px 0;margin:12px 0}
+.note b{color:var(--ink-1)}
+.note.hl{border-left-color:var(--navy);background:var(--navy-soft);color:var(--ink-1)}
+.note.warn{border-left-color:var(--warn);background:var(--warn-bg);color:var(--ink-1)}
+.note.alert{border-left-color:var(--alert);background:var(--alert-bg);color:var(--ink-1)}
+.note.ok{border-left-color:var(--ok);background:var(--ok-bg);color:var(--ink-1)}
+ul,ol{margin:8px 0 12px;padding-left:1.3em}
+li{margin-bottom:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 10px;
+  border-radius:20px;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.todo{background:var(--warn-bg);color:var(--warn)}
+.chip.next{background:var(--navy-soft);color:var(--navy)}
+.src{font-size:11.5px;color:var(--ink-3);margin-top:6px}
+.src a{color:var(--ink-2)}
+
+/* 進捗バー */
+.prog{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 4px}
+.pc{flex:1 1 84px;min-width:84px;border-radius:8px;padding:9px 10px;border:1px solid var(--line);
+  background:var(--surface-2);text-align:center}
+.pc.done{background:var(--ok-bg);border-color:var(--ok-line)}
+.pc.todo{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+.pc .n{font-family:"Roboto Mono",monospace;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em}
+.pc.done .n{color:var(--ok)} .pc.todo .n{color:var(--warn)}
+.pc .t{font-size:12px;line-height:1.5;margin-top:1px}
+
+footer{margin:60px 0 44px;padding-top:20px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div>
+      <div class="eyebrow">Power Automate ／ 営業週報の自動化</div>
+      <h1>週報自動化 設定手順書</h1>
+    </div>
+    <div class="meta">
+      Outlookの予定 → SharePointリストへ自動転記<br>
+      <span class="mono">2026-09-17</span> 版
+    </div>
+  </div>
+</header>
+
+<nav class="sticky"><div class="nav-in">
+  <a href="#s0">進捗</a>
+  <a href="#s1">全体の流れ</a>
+  <a href="#s2">事前準備</a>
+  <a href="#s3">①〜③ 期間の計算</a>
+  <a href="#s4">④〜⑥ 予定の取得</a>
+  <a href="#s5">⑦〜⑨ 重複の判定</a>
+  <a href="#s6">⑩ 転記（残り）</a>
+  <a href="#s7">テスト</a>
+  <a href="#s8">つまずきポイント</a>
+</div></nav>
+
+<div class="wrap">
+
+<section id="s0">
+  <div class="sec-head"><span class="sec-num">00</span><h2>現在の進捗</h2></div>
+  <p class="lede">第2回（9/17）の作業で、⑨の条件分岐まで完了しました。残りは⑩［項目の作成］の1アクションのみです。</p>
+
+  <div class="card pad">
+    <div class="prog">
+      <div class="pc done"><div class="n">① 完了</div><div class="t">トリガー</div></div>
+      <div class="pc done"><div class="n">② 完了</div><div class="t">WeekStart</div></div>
+      <div class="pc done"><div class="n">③ 完了</div><div class="t">WeekEnd</div></div>
+      <div class="pc done"><div class="n">④ 完了</div><div class="t">予定の取得</div></div>
+      <div class="pc done"><div class="n">⑤ 完了</div><div class="t">非公開を除外</div></div>
+      <div class="pc done"><div class="n">⑥ 完了</div><div class="t">For each</div></div>
+      <div class="pc done"><div class="n">⑦ 完了</div><div class="t">目的の判定</div></div>
+      <div class="pc done"><div class="n">⑧ 完了</div><div class="t">既存を確認</div></div>
+      <div class="pc done"><div class="n">⑨ 完了</div><div class="t">条件分岐</div></div>
+      <div class="pc todo"><div class="n">⑩ 残り</div><div class="t">項目の作成</div></div>
+    </div>
+
+    <div class="note ok" style="margin-top:18px"><b>ここまで出来ています。</b>
+    予定表から先週金曜〜今週木曜の予定を取得し、非公開を除いて1件ずつ処理し、目的を判定して、
+    すでにリストに登録済みかどうかを確認するところまでが動く状態です。</div>
+
+    <div class="note warn"><b>残っているのは1アクションだけです。</b>
+    ⑨の条件の「True（はい）」の側に、SharePointの［項目の作成］を追加して各欄を埋めれば完成します。
+    <a href="#s6">⑩ 転記（残り）</a>に設定値をすべて記載しています。</div>
+
+    <h3>この手順書の使い方</h3>
+    <ul>
+      <li><b>⑩だけ進めたい方</b> … <a href="#s6">⑩の章</a>から読んでください。</li>
+      <li><b>最初から作り直したい方</b> … ①から順に進めてください。全アクションの設定値を記載しています。</li>
+      <li><b>エラーが出た方</b> … <a href="#s8">つまずきポイント</a>に、実際に発生したエラーと対処をまとめています。</li>
+    </ul>
+    <div class="note"><b>表記について。</b>Power Automateは画面によって日本語の表記が揺れます
+    （例：「配列のフィルター処理」と「アレイのフィルター処理」）。本書では実際の画面に出る名称を優先し、
+    見つからない場合の検索ワードを併記しています。</div>
+  </div>
+</section>
+
+<section id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><h2>全体の流れ</h2></div>
+  <div class="card pad">
+    <pre><code>フローを手動でトリガーする          ①
+  ↓
+WeekStart（作成）                  ②  先週金曜0:00 を UTC で表す
+  ↓
+WeekEnd（作成）                    ③  今週金曜0:00 を UTC で表す
+  ↓
+イベントのカレンダー ビューの取得 (V3)  ④  Outlookから予定を取得
+  ↓
+非公開を除外（アレイのフィルター処理）  ⑤  私的な予定を外す
+  ↓
+For each                           ⑥  1件ずつ処理する
+   ├ 目的（作成）                   ⑦  件名から12区分を判定
+   ├ 既存を確認（複数の項目の取得）    ⑧  登録済みか照会
+   └ 重複がなければ作成（条件）        ⑨  0件のときだけ次へ
+        └ 項目の作成                ⑩  リストに1行追加  ← 残り</code></pre>
+
+    <h3>アクションの探し方</h3>
+    <div class="scroll"><table>
+      <thead><tr><th style="width:34%">アクション</th><th style="width:26%">検索ワード</th><th>コネクタ</th></tr></thead>
+      <tbody>
+        <tr><td>作成（Compose）</td><td class="mono">データ操作</td><td>データ操作</td></tr>
+        <tr><td>アレイのフィルター処理</td><td class="mono">アレイ / Filter</td><td>データ操作</td></tr>
+        <tr><td>それぞれに適用する（For each）</td><td class="mono">コントロール / each</td><td>コントロール</td></tr>
+        <tr><td>条件</td><td class="mono">コントロール</td><td>コントロール</td></tr>
+        <tr><td>イベントのカレンダー ビューの取得 (V3)</td><td class="mono">イベント</td><td>Office 365 Outlook</td></tr>
+        <tr><td>複数の項目の取得 / 項目の作成</td><td class="mono">SharePoint</td><td>SharePoint</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note hl"><b>アクション名で検索すると似た名前が大量に出ます。</b>
+    コネクタ名（<b>データ操作／コントロール／SharePoint</b>）で検索して、そのグループの中から選ぶほうが確実です。
+    この3つを覚えておけば迷いません。</div>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="sec-head"><span class="sec-num">02</span><h2>事前準備：SharePointリスト</h2></div>
+  <p class="lede">作成済みの場合は読み飛ばして構いません。作り直す場合、または本番用の共有リストを作る場合の手順です。</p>
+
+  <div class="card pad">
+    <h3 style="margin-top:0">CSVから「列だけ」作る</h3>
+    <p><b>データは入れません。</b>行はフローがOutlookから入れるものだけにします。取り込むCSVは見出し1行のみです。</p>
+    <pre><code>顧客名,日付,担当者,対応者,目的,内容,確認ポイント,拠点,EventUID,議事録リンク</code></pre>
+    <ol>
+      <li>SharePointサイトを開く</li>
+      <li>［＋ 新規］→［リスト］→［<b>CSVから</b>］</li>
+      <li>［ファイルをアップロード］でCSVを選ぶ</li>
+      <li>列を確認して［次へ］</li>
+      <li><b>名前を打ち替える</b>（既定はCSVのファイル名がそのまま入ります）</li>
+      <li><b>［保存先］を「マイリスト」からサイトに変更する</b>→［作成］</li>
+    </ol>
+    <div class="note alert"><b>5と6を必ず変更してください。</b>
+    既定のまま進めると、リスト名がファイル名になり、保存先が「マイリスト」（個人サイト）になります。
+    個人サイトに作られると <code>…-my.sharepoint.com/personal/…</code> というURLになり、
+    <b>Power Automateの「サイトのアドレス」に出てこないため、フローから書き込めません。</b></div>
+    <div class="note warn"><b>「すでに存在します」と出たとき。</b>
+    同じサイトに同名のリストがあります。リスト名の末尾にお名前を足してください（例：<code>営業活動履歴_suzuki</code>）。</div>
+
+    <h3>列の内部名は <span class="mono">field_1</span> 〜 <span class="mono">field_9</span> になります</h3>
+    <p>SharePointの列には、画面に見える<b>表示名</b>と、内部で使う<b>内部名</b>の2つがあります。フローの一部は内部名で書く必要があります。</p>
+    <div class="note alert"><b>CSVから作ったリストは、見出しが日本語でも英字でも、内部名がすべて <code>field_1</code> 以降の連番になります。</b>
+    実機で確認した結果です。手で列を作った場合は読める内部名が付きますが、CSV取り込みではこの連番になります。</div>
+    <div class="scroll"><table>
+      <thead><tr><th style="width:24%">表示名</th><th style="width:18%">内部名</th><th style="width:24%">種類</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td>顧客名（タイトル）</td><td class="mono">Title</td><td>1行テキスト</td><td>場所が空なら件名、あれば場所</td></tr>
+        <tr><td>日付</td><td class="mono">field_1</td><td>日付と時刻</td><td>予定の開始時刻</td></tr>
+        <tr><td>担当者</td><td class="mono">field_2</td><td>1行テキスト</td><td>実行した本人</td></tr>
+        <tr><td>対応者</td><td class="mono">field_3</td><td>1行テキスト</td><td>先方の担当者（次段階）</td></tr>
+        <tr><td>目的</td><td class="mono">field_4</td><td>選択肢（12項目）</td><td>件名からの判定結果</td></tr>
+        <tr><td>内容</td><td class="mono">field_5</td><td>複数行テキスト</td><td>予定の本文プレビュー</td></tr>
+        <tr><td>確認ポイント</td><td class="mono">field_6</td><td>1行テキスト</td><td>次段階</td></tr>
+        <tr><td>拠点</td><td class="mono">field_7</td><td>選択肢</td><td>次段階</td></tr>
+        <tr><td>予定ID</td><td class="mono">field_8</td><td>1行テキスト</td><td><b>重複判定の鍵</b></td></tr>
+        <tr><td>議事録リンク</td><td class="mono">field_9</td><td>ハイパーリンク</td><td>次段階</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>内部名の確かめ方。</b>リストの［設定］→［列］から列名をクリックすると、
+    ブラウザのアドレス欄の末尾に <code>Field=…</code> と出ます。それが内部名です。
+    同じCSVから作っていれば、全員この並びで一致します。</div>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="sec-head"><span class="sec-num">03</span><h2>①〜③　トリガーと期間の計算</h2></div>
+  <div class="card pad">
+
+    <div class="step done">
+      <div class="no">①</div>
+      <div class="bd">
+        <h3>フローを手動でトリガーする <span class="chip ok">完了</span></h3>
+        <p>［作成］→［<b>インスタント クラウド フロー</b>］→ トリガーは［<b>フローを手動でトリガーする</b>］。</p>
+        <div class="note hl"><b>手動トリガーで作ります。</b>その場で何度も実行して結果を確かめられるためです。
+        中身が固まってから週次の自動実行に切り替えます。<b>②以降は自動化しても一切変わりません。</b></div>
+        <h4>あとで週次の自動実行に切り替えるとき</h4>
+        <p>トリガーを［スケジュール済みクラウド フロー］に差し替えます。開始日時＝直近の金曜17:00、繰り返し＝1週間、実行日＝金曜のみ。</p>
+        <div class="note warn"><b>そのときタイムゾーンを必ず設定します。</b>
+        トリガーの［詳細オプションを表示］でタイムゾーンを <code>(UTC+09:00) Osaka, Sapporo, Tokyo</code> に。
+        既定はUTCのため、金曜17時のつもりが土曜2時に動きます。</div>
+      </div>
+    </div>
+
+    <div class="step done">
+      <div class="no">②</div>
+      <div class="bd">
+        <h3>WeekStart（作成） <span class="chip ok">完了</span></h3>
+        <p>［データ操作］→［<b>作成</b>］。アクション名を <code>WeekStart</code> に変更し、<code>fx</code> に貼り付けます。</p>
+        <pre><code>concat(formatDateTime(addHours(addDays(startOfDay(convertFromUtc(utcNow(),'Tokyo Standard Time')),sub(mod(sub(12,dayOfWeek(convertFromUtc(utcNow(),'Tokyo Standard Time'))),7),7)),-9),'yyyy-MM-ddTHH:mm:ss'),'Z')</code></pre>
+      </div>
+    </div>
+
+    <div class="step done">
+      <div class="no">③</div>
+      <div class="bd">
+        <h3>WeekEnd（作成） <span class="chip ok">完了</span></h3>
+        <p>同じく［作成］。アクション名を <code>WeekEnd</code> に。</p>
+        <pre><code>concat(formatDateTime(addHours(addDays(startOfDay(convertFromUtc(utcNow(),'Tokyo Standard Time')),mod(sub(12,dayOfWeek(convertFromUtc(utcNow(),'Tokyo Standard Time'))),7)),-9),'yyyy-MM-ddTHH:mm:ss'),'Z')</code></pre>
+
+        <div class="note"><b>式の読み方。</b><code>convertFromUtc</code> で日本時間にし、実行日から見て直近の金曜0:00を求め、
+        その7日前を開始、当該金曜を終了としています。最後の <code>addHours(-9)</code> でUTCに戻し、
+        <code>concat</code> で末尾に <code>Z</code> を付けています。
+        <b>月曜から金曜のどの日に実行しても、同じ1週間（金曜スタート・木曜締め）を取得します。</b></div>
+
+        <div class="note warn"><b>末尾の <code>Z</code> は必要です。</b>
+        <code>convertFromUtc</code> の戻り値にはタイムゾーンの表記が付かないため、
+        予定取得アクションがUTCとして解釈しないことがあります。
+        <code>formatDateTime</code> の書式文字列に <code>Z</code> を直接書くと解釈が不安定なため、<code>concat</code> で外から足しています。</div>
+
+        <div class="note hl"><b>アクションは［変数を初期化する］ではなく［作成］で構いません。</b>
+        1アクションで済み、参照は <code>outputs('WeekStart')</code> になります。
+        <b>先頭の <code>@</code> は不要です</b>（fxの入力欄では付けません）。</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section id="s4">
+  <div class="sec-head"><span class="sec-num">04</span><h2>④〜⑥　予定の取得と絞り込み</h2></div>
+  <div class="card pad">
+
+    <div class="step done">
+      <div class="no">④</div>
+      <div class="bd">
+        <h3>イベントのカレンダー ビューの取得 (V3) <span class="chip ok">完了</span></h3>
+        <p>Office 365 Outlook。検索ワードは「<b>イベント</b>」。</p>
+        <dl class="field">
+          <dt>カレンダー ID</dt><dd><b>必ずプルダウンから選ぶ。</b>自分の予定表（既定は「Calendar」や「予定表」）</dd>
+          <dt>開始時刻</dt><dd><code>outputs('WeekStart')</code></dd>
+          <dt>終了時刻</dt><dd><code>outputs('WeekEnd')</code></dd>
+        </dl>
+        <div class="note alert"><b>カレンダー IDは手入力しないでください。</b>
+        文字で「Calendar」と入力すると、内部的にIDとして認識されず
+        <code>400 / ID の形式が正しくありません</code> になります。
+        プルダウンから選ぶと、内部的に長い識別子が入ります。<b>第2回で実際に発生したエラーです。</b></div>
+        <div class="note alert"><b>似た名前の［イベントの取得 (V4)］を使わないでください。</b>
+        V4は<b>繰り返し予定を展開しません</b>。定期的な集配のような予定が毎週漏れます。
+        <div class="src">“This operation gets all events (including instances of recurrences) in a calendar using Graph API.” — Office 365 Outlook connector, Microsoft Learn</div></div>
+        <div class="note"><b>V3が見つからないとき。</b>検索結果の下のほうにスクロールすると出てきます。
+        アクション一覧は上位にV1・V2が並ぶことがあり、V3は埋もれがちです。</div>
+      </div>
+    </div>
+
+    <div class="step done">
+      <div class="no">⑤</div>
+      <div class="bd">
+        <h3>非公開を除外（アレイのフィルター処理） <span class="chip ok">完了</span></h3>
+        <p>［データ操作］→［<b>アレイのフィルター処理</b>］。アクション名を <code>非公開を除外</code> に。</p>
+        <dl class="field">
+          <dt>差出人（From）</dt><dd>④の動的コンテンツ <b>「値の一覧」</b>（body/value）</dd>
+          <dt>左側</dt><dd><code>item()?['sensitivity']</code></dd>
+          <dt>条件</dt><dd><b>次の値に等しくない</b></dd>
+          <dt>右側</dt><dd><code>private</code>（引用符は不要）</dd>
+        </dl>
+        <div class="note"><b>「配列のフィルター処理」では検索に出ないことがあります。</b>
+        画面によって「<b>アレイ</b>のフィルター処理」と表記されます。「アレイ」または英語で「Filter」で検索してください。</div>
+        <div class="note"><b>左側の <code>item()</code> はここでは正しい書き方です。</b>
+        For each の中では <code>items('For each')</code> を使いますが、
+        アレイのフィルター処理の中だけは <code>item()</code> で、フィルター対象の1件を指します。</div>
+        <div class="note hl"><b>秘密度が見つからないとき。</b>
+        左側のプルダウンで［<b>表示を増やす</b>］を押すと、Outlookから取れる全項目が出ます。
+        その中の「秘密度」を選んでください。</div>
+      </div>
+    </div>
+
+    <div class="step done">
+      <div class="no">⑥</div>
+      <div class="bd">
+        <h3>For each（それぞれに適用する） <span class="chip ok">完了</span></h3>
+        <p>［コントロール］→［<b>それぞれに適用する</b>］。</p>
+        <dl class="field">
+          <dt>アクション名</dt><dd><code>For each</code> に変更（<b>半角スペース1つ</b>）</dd>
+          <dt>入力（出力の選択）</dt><dd>⑤「非公開を除外」の <b>本文（Body）</b></dd>
+        </dl>
+        <div class="note alert"><b>アクション名を <code>For each</code> にしてください。</b>
+        以降の式が <code>items('For_each')</code> でこのループを参照します。
+        名前が「それぞれに適用する」のままだと、保存時に次のエラーになります。
+        <pre style="margin:8px 0 0"><code>The repetition action(s) 'For_each' referenced by 'inputs'
+in action '目的' are not defined in the template.</code></pre>
+        <b>名前にスペースを入れると、式の中では <code>_</code> に変わります。</b>
+        だから <code>For each</code> → <code>items('For_each')</code> で一致します。<b>全角スペースは不可です。</b>
+        <br><br>第2回で実際に発生しました。別の名前のまま進める場合は、⑦⑧⑩の式をすべてその名前に書き換えてください。</div>
+        <div class="note warn"><b>入力元を④の <code>value</code> にしないでください。</b>
+        ⑤のフィルター結果（Body）を指定します。ここを間違えると、
+        <b>フィルターは動いているのに結果が使われず、非公開の予定がそのまま入ります。</b>
+        エラーにならないので気づきにくい箇所です。</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><h2>⑦〜⑨　目的の判定と重複チェック</h2></div>
+  <p class="lede">ここから先は For each の<b>中</b>に入れます。枠の内側の「＋」から追加してください。</p>
+  <div class="card pad">
+
+    <div class="step done">
+      <div class="no">⑦</div>
+      <div class="bd">
+        <h3>目的（作成） <span class="chip ok">完了</span></h3>
+        <p>［データ操作］→［<b>作成</b>］。アクション名を <code>目的</code> に。<code>fx</code> に貼り付けます。</p>
+        <pre><code>if(contains(items('For_each')?['subject'],'集配'),'集配対応',
+if(or(contains(items('For_each')?['subject'],'クレーム'),contains(items('For_each')?['subject'],'苦情')),'クレーム対応',
+if(contains(items('For_each')?['subject'],'臨時'),'臨時納品',
+if(contains(items('For_each')?['subject'],'新規'),'新規打合せ',
+if(contains(items('For_each')?['subject'],'商談'),'商談',
+if(contains(items('For_each')?['subject'],'委員会'),'委員会',
+if(contains(items('For_each')?['subject'],'研修'),'研修',
+if(or(contains(items('For_each')?['subject'],'会食'),contains(items('For_each')?['subject'],'懇親')),'会食・懇親会',
+if(or(contains(items('For_each')?['subject'],'指定休'),contains(items('For_each')?['subject'],'有給')),'指定休',
+if(contains(items('For_each')?['subject'],'会議'),'社内会議',
+if(contains(items('For_each')?['subject'],'打合'),'打合せ',
+'その他')))))))))))</code></pre>
+        <div class="note"><b>上から順に件名を見て、最初に当たったものを採用します。</b>
+        どれにも当たらなければ「その他」です。順番に意味があり、「クレーム対応の打合せ」は
+        <code>クレーム</code> の判定が <code>打合</code> より上にあるためクレーム対応になります。</div>
+        <div class="note hl"><b>アクション名が参照名になります。</b>
+        <code>目的</code> という名前だから <code>outputs('目的')</code> で呼べます。
+        既定の「作成 2」「作成 3」のままだと、あとで見たときに何のアクションか分からなくなります。</div>
+        <div class="note"><b>判定が違っても問題ありません。</b>
+        「目的」を選択肢列にすれば、リスト上で選び直せます。<b>一次分類を機械が、確認を人が</b>という分担です。
+        <br><br><b>次段階の改善案：</b>このキーワード表をフローの中に書くと、区分を1つ変えるたびにフローを編集することになります。
+        次回、キーワードと区分の対応表をSharePointリストに切り出し、<b>リストを直すだけで判定が変わる</b>形に組み替えます。</div>
+      </div>
+    </div>
+
+    <div class="step done">
+      <div class="no">⑧</div>
+      <div class="bd">
+        <h3>既存を確認（<b>複数の</b>項目の取得） <span class="chip ok">完了</span></h3>
+        <p>［SharePoint］→［<b>複数の項目の取得</b>］（英語名 Get items）。アクション名を <code>既存を確認</code> に。</p>
+        <dl class="field">
+          <dt>サイトのアドレス</dt><dd>リストを作成したサイト</dd>
+          <dt>リスト名</dt><dd>営業活動履歴</dd>
+          <dt>フィルター クエリ</dt><dd><code>field_8 eq '</code> ＋ 動的コンテンツ <code>iCalUId</code> ＋ <code>'</code></dd>
+          <dt>上から順に取得</dt><dd><code>1</code></dd>
+        </dl>
+        <p>1つの式として貼る場合はこちらです。</p>
+        <pre><code>concat('field_8 eq ''', items('For_each')?['iCalUId'], '''')</code></pre>
+        <div class="note alert"><b>［項目の取得］と間違えないでください。</b>
+        似た名前で2つあります。
+        <div class="scroll" style="margin-top:8px"><table>
+          <thead><tr><th style="width:38%">アクション</th><th style="width:22%">欄</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>項目の取得（Get item）</td><td>ID</td><td>行番号を知っている1件を取る</td></tr>
+            <tr><td><b>複数の項目の取得（Get items）</b></td><td>フィルター クエリ</td><td><b>条件で探す。こちらが正解</b></td></tr>
+          </tbody>
+        </table></div>
+        <b>［項目の取得］を選ぶと「'ID' は必須です」と赤字が出ます。</b>その場合は削除して追加し直してください。第2回で実際に発生しました。</div>
+        <div class="note warn"><b>フィルター クエリの欄が見当たらないとき。</b>
+        ［詳細パラメーター］の［<b>すべて表示</b>］を押すと出てきます。既定では畳まれています。</div>
+        <div class="note alert"><b>フィルター クエリは内部名で書きます。</b>
+        表示名の「予定ID」ではなく <code>field_8</code> です。
+        表示名で書くと列が見つからずエラーになります。</div>
+        <div class="note"><b>これがないと、フローを2回動かしただけで行が倍になります。</b>
+        手動テストを繰り返すときに特に効きます。<code>iCalUId</code> は予定ごとに一意の値です。
+        <div class="src">“iCalUId … A unique identifier for an event across calendars. This ID is different for each occurrence in a recurring series.” — event resource type, Microsoft Graph。繰り返し予定も1回ずつ別の行として登録されます</div></div>
+      </div>
+    </div>
+
+    <div class="step done">
+      <div class="no">⑨</div>
+      <div class="bd">
+        <h3>重複がなければ作成（条件） <span class="chip ok">完了</span></h3>
+        <p>［コントロール］→［<b>条件</b>］。アクション名を <code>重複がなければ作成</code> に。</p>
+        <dl class="field">
+          <dt>左側（fx）</dt><dd><code>length(body('既存を確認')?['value'])</code></dd>
+          <dt>条件</dt><dd><b>次の値に等しい</b></dd>
+          <dt>右側</dt><dd><code>0</code></dd>
+        </dl>
+        <div class="note"><b>照会の結果が0件＝まだ登録されていない、ということです。</b>
+        「はい（True）」の側だけを使い、「いいえ（False）」は<b>空のまま</b>にします。
+        2行目の条件は追加不要です。</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section id="s6">
+  <div class="sec-head"><span class="sec-num">06</span><h2>⑩　リストへ転記する <span class="chip todo">ここが残りです</span></h2></div>
+  <p class="lede">⑨の条件の「はい（True）」の側に追加します。これで完成です。</p>
+
+  <div class="card pad">
+    <div class="step todo">
+      <div class="no">⑩</div>
+      <div class="bd">
+        <h3>項目の作成 <span class="chip todo">未完了</span></h3>
+        <p>⑨「重複がなければ作成」の<b>True の側</b>にある「＋」から、［SharePoint］→［<b>項目の作成</b>］を追加します。</p>
+        <dl class="field">
+          <dt>サイトのアドレス</dt><dd>⑧と同じサイト</dd>
+          <dt>リスト名</dt><dd>⑧と同じリスト</dd>
+        </dl>
+
+        <h4>各欄に入れる値</h4>
+        <div class="scroll"><table>
+          <thead><tr><th style="width:24%">欄（表示名）</th><th style="width:16%">入れ方</th><th>値</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>タイトル</b>（顧客名）</td><td class="nw">fx（式）</td>
+              <td><code>if(empty(items('For_each')?['location']),items('For_each')?['subject'],items('For_each')?['location'])</code></td>
+            </tr>
+            <tr>
+              <td><b>日付</b></td><td class="nw">動的コンテンツ</td>
+              <td><b>「タイム ゾーンが指定された開始時刻」</b></td>
+            </tr>
+            <tr>
+              <td><b>担当者</b></td><td class="nw">手入力</td>
+              <td>ご自身のお名前を文字で入力</td>
+            </tr>
+            <tr>
+              <td>対応者</td><td class="nw">—</td>
+              <td>空欄のまま</td>
+            </tr>
+            <tr>
+              <td><b>目的</b></td><td class="nw">動的コンテンツ</td>
+              <td>⑦「目的」の <b>出力</b></td>
+            </tr>
+            <tr>
+              <td><b>内容</b></td><td class="nw">動的コンテンツ</td>
+              <td><b>「本文プレビュー」</b></td>
+            </tr>
+            <tr>
+              <td>確認ポイント</td><td class="nw">—</td>
+              <td>空欄のまま</td>
+            </tr>
+            <tr>
+              <td>拠点</td><td class="nw">—</td>
+              <td>空欄のまま</td>
+            </tr>
+            <tr>
+              <td><b>予定ID</b></td><td class="nw">fx（式）</td>
+              <td><code>items('For_each')?['iCalUId']</code></td>
+            </tr>
+            <tr>
+              <td>議事録リンク</td><td class="nw">—</td>
+              <td>空欄のまま</td>
+            </tr>
+          </tbody>
+        </table></div>
+
+        <div class="note alert"><b>日付に「作成時刻」を選ばないでください。</b>
+        似た名前で並んでいますが、<code>作成時刻</code> は<b>予定を登録した日</b>で、予定が行われる日ではありません。
+        先月登録した予定が先月の日付で並んでしまいます。<b>「タイム ゾーンが指定された開始時刻」</b>を選んでください。</div>
+
+        <div class="note warn"><b>内容に「本文」を選ばないでください。</b>
+        <code>本文</code> はHTMLタグを含むため、そのまま入れると読めません。
+        <b>「本文プレビュー」</b>が書式なしのテキストです。</div>
+
+        <div class="note warn"><b>担当者に「開催者」を選ばないでください。</b>
+        開催者は予定を立てた人です。他の方から招待された会議では、その方のお名前が入ります。
+        <b>今回は文字で直接入力してください。</b></div>
+
+        <div class="note"><b>対応者に「必須出席者」を選ばないでください。</b>
+        メールアドレスがセミコロン区切りで並ぶ欄です。先方の担当者名を入れたい列なので、空欄のままにします。</div>
+
+        <div class="note hl"><b>予定IDは動的コンテンツに出てこないことがあります。</b>
+        その場合は <code>fx</code> に <code>items('For_each')?['iCalUId']</code> と直接書いてください。
+        <b>この列を空にすると重複チェックが機能しません。</b>⑧で照会しているのはこの列です。</div>
+
+        <div class="note"><b>顧客名について。</b>
+        場所欄が空なら件名を、入っていれば場所を使う式にしています。
+        実際の予定を見ながら、どちらを正にするかは運用開始後に決めます。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s7">
+  <div class="sec-head"><span class="sec-num">07</span><h2>テストと確認</h2></div>
+  <div class="card pad">
+    <ol>
+      <li>右上の［<b>保存</b>］</li>
+      <li>［<b>テスト</b>］→［<b>手動</b>］→［テスト］→［<b>フローの実行</b>］</li>
+      <li>各アクションが緑のチェックになることを確認</li>
+      <li>SharePointリストを開き、行が入っていることを確認</li>
+      <li><b>もう一度実行して、行が増えないことを確認</b>（重複防止の動作確認）</li>
+    </ol>
+    <div class="note ok"><b>5まで通れば完成です。</b>以降は何度テストしても行が重複しません。</div>
+
+    <h3>失敗したときの見方</h3>
+    <p>［<b>マイ フロー</b>］→ フロー名 → 実行履歴から、赤くなったアクションをクリックすると入力・出力・エラーメッセージが見られます。</p>
+    <div class="note hl"><b>「入力」を見るのがコツです。</b>
+    実際に送られた値が分かるので、式の結果が意図どおりかを確認できます。
+    出力だけ見ても原因にたどり着けないことが多いです。</div>
+
+    <h3>取得件数が0件のとき</h3>
+    <div class="note"><b>エラーではありません。</b>
+    For each が緑のチェックで0秒、中のアクションが灰色のダッシュなら、
+    <b>対象期間にその予定表の予定が無かった</b>というだけです。
+    ④の出力を開いて <code>value</code> が <code>[]</code> かどうか確認してください。</div>
+  </div>
+</section>
+
+<section id="s8">
+  <div class="sec-head"><span class="sec-num">08</span><h2>つまずきポイント</h2></div>
+  <p class="lede">実際に発生したもの、事前検証で踏んだものをまとめています。</p>
+  <div class="card pad">
+    <div class="scroll"><table>
+      <thead><tr><th style="width:32%">起こること</th><th>原因と対処</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>400 / ID の形式が正しくありません</b></td>
+          <td>④のカレンダー IDを手入力している。<b>プルダウンから選び直す。</b>
+          文字列の「Calendar」ではIDとして認識されません</td>
+        </tr>
+        <tr>
+          <td><b>XRM API に対する要求が失敗しました<br>（InvalidTemplate）</b></td>
+          <td>エラー文に <code>The repetition action(s) 'For_each' … are not defined</code> とある場合、
+          <b>ループの名前が <code>For each</code> になっていません。</b>
+          ⑥のアクション名を半角で <code>For each</code> に変更してください</td>
+        </tr>
+        <tr>
+          <td><b>'ID' は必須です（赤字）</b></td>
+          <td>⑧で［項目の取得］を選んでいます。<b>［複数の項目の取得］</b>に置き換えてください</td>
+        </tr>
+        <tr>
+          <td><b>フィルター クエリの欄がない</b></td>
+          <td>［詳細パラメーター］の［<b>すべて表示</b>］を押すと出てきます</td>
+        </tr>
+        <tr>
+          <td><b>SharePointアクションで<br>接続を求められる／設定画面が違う</b></td>
+          <td>接続が切れています。［サインイン］で接続し直し、
+          <b>［オンプレミス データ ゲートウェイ経由で接続します］のチェックを外してください。</b>
+          クラウド上のSharePointなのでゲートウェイは不要です。
+          チェックが入ったままだと、ゲートウェイ名・認証の種類・ユーザー名・パスワードの入力欄が出ます</td>
+        </tr>
+        <tr>
+          <td><b>「配列のフィルター処理」が検索に出ない</b></td>
+          <td>表記が「<b>アレイ</b>のフィルター処理」になっています。「アレイ」または「Filter」で検索</td>
+        </tr>
+        <tr>
+          <td><b>V3が見つからない</b></td>
+          <td>検索結果の下のほうにスクロールしてください。V1・V2が上位に並ぶことがあります</td>
+        </tr>
+        <tr>
+          <td><b>「すでに存在します」でリストが作れない</b></td>
+          <td>同じサイトに同名のリストがあります。リスト名の末尾にお名前を足してください</td>
+        </tr>
+        <tr>
+          <td><b>リストがPower Automateの選択肢に出てこない</b></td>
+          <td>「マイリスト」（個人サイト）に作られています。サイトを指定して作り直してください</td>
+        </tr>
+        <tr>
+          <td><b>秘密度・予定IDなどが選択肢に出ない</b></td>
+          <td>動的コンテンツの［<b>表示を増やす</b>］を押すと全項目が出ます。
+          それでも出ない場合は <code>fx</code> で直接書いてください</td>
+        </tr>
+        <tr>
+          <td><b>リストの日付が9時間ずれて見える</b></td>
+          <td><b>フローではなくサイトの地域設定です。</b>
+          ［設定］→［サイトの設定］→［地域の設定］で、タイムゾーンを
+          <code>(UTC+09:00) 大阪、札幌、東京</code>、ロケールを日本語に変更してください。
+          日付が <code>07/19/2026</code> のような米国式で表示されている場合も同じ原因です</td>
+        </tr>
+        <tr>
+          <td>定期的な集配予定が入らない</td>
+          <td>［イベントの取得 (V4)］を使っています。V4は繰り返し予定を展開しません。<b>V3</b>が正解です</td>
+        </tr>
+        <tr>
+          <td>実行するたびに行が増える</td>
+          <td>⑧⑨の重複チェックが入っていない、またはフィルター クエリの列名が表示名になっています</td>
+        </tr>
+        <tr>
+          <td>日付が9時間ずれる（自動実行後）</td>
+          <td>トリガーのタイムゾーンがUTCのままです。詳細オプションで東京に設定してください</td>
+        </tr>
+        <tr>
+          <td>他のメンバーの予定が取れない</td>
+          <td>フローは<b>作成者の権限</b>で動きます。他人の予定表を読むには共有設定が必要です。
+          <b>各自が自分のフローを持ち、共有リストに書き込む構成</b>を推奨します</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="s9">
+  <div class="sec-head"><span class="sec-num">09</span><h2>この先の予定</h2></div>
+  <div class="card pad">
+    <h3 style="margin-top:0">次段階で追加すること</h3>
+    <div class="scroll"><table>
+      <thead><tr><th style="width:30%">項目</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td><b>担当者の自動取得</b></td>
+          <td>［マイ プロフィールの取得 (V2)］（Office 365 ユーザー）に差し替え。実行した本人の名前が自動で入ります。
+          同じアクションから <code>department</code>（部署）<code>officeLocation</code>（勤務地）も取得できるため、
+          <b>拠点・部課の自動付与もここで実現できる見込みです</b></td></tr>
+        <tr><td><b>キーワード表の外出し</b></td>
+          <td>⑦のキーワード判定をSharePointリストに切り出し、フローを編集せずに区分を変更できる形に</td></tr>
+        <tr><td><b>顧客名の名寄せ</b></td>
+          <td>顧客マスタと突合し、正式名称と顧客コードを付与。表記ゆれで集計が割れるのを防ぎます</td></tr>
+        <tr><td><b>週次の自動実行</b></td>
+          <td>トリガーをスケジュールに切り替え。タイムゾーンの設定を忘れずに</td></tr>
+        <tr><td><b>Power BIでの可視化</b></td>
+          <td>リストに直接接続します。担当者別・目的別・期間別の集計、顧客ごとの詳細ページ（ドリルスルー）</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note hl"><b>Power BIは1名の担当者を決めて構築します。</b>
+    Power Automateは各自が自分の予定表を読むため全員が設定する必要がありますが、
+    <b>BIは1人が作って他は見るだけ</b>なので、全員の時間を使う必要がありません。</div>
+
+    <div class="note warn"><b>Power BIのライセンスについて。</b>
+    無償ライセンスでは「自分だけが見る」レポートまでです。他の方に配るには、
+    <b>作る人だけでなく見る人にもPower BI Proが必要</b>になります（Premium容量に置く場合を除く）。
+    <br><br>公式ドキュメントの記載：<i>“Only Power BI Pro users can publish, share, or consume other Pro users' content unless it resides in a Power BI Premium capacity.”</i>
+    <br><br>当面は<b>PDFやPowerPointへ書き出して配る</b>方法であれば、追加ライセンスなしで運用できます。
+    <div class="src">なお Microsoft 365 E5 には Power BI Pro が含まれます。
+    <code>app.powerbi.com</code> → 右上のプロフィール →［アカウントの表示］→［サブスクリプション］で確認できます</div></div>
+  </div>
+</section>
+
+<footer>
+  <span>週報自動化 設定手順書</span>
+  <span class="mono">2026-09-17</span>
+</footer>
+</div>
+
+</body>
+</html>
